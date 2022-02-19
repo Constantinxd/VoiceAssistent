@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">VoiceAssistent</string>
+    <string name="app_name">Голосовой ассистент</string>
+    <string name="send_button_text">Отправить</string>
+    <string name="question_field_hint_text">Задайте вопрос</string>
 </resources>
