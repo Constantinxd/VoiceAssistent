@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity
-    implements TextToSpeech.OnInitListener {
+public class MainActivity extends AppCompatActivity {
 
     protected Button sendButton;
     protected EditText questionText;
@@ -26,7 +25,15 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        textToSpeech = new TextToSpeech(this, this);
+        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int i) {
+                if (i != TextToSpeech.ERROR) {
+                    textToSpeech.setLanguage(new Locale("ru"));
+                }
+            }
+        });
+
         chat = new ArrayList<>();
 
         super.onCreate(savedInstanceState);
@@ -57,14 +64,6 @@ public class MainActivity extends AppCompatActivity
 
         for (String s : savedInstanceState.getStringArrayList("chat"))
             chatWindow.append(s + "\n");
-    }
-
-
-    @Override
-    public void onInit(int i) {
-        if (i != TextToSpeech.ERROR) {
-            textToSpeech.setLanguage(new Locale("ru"));
-        }
     }
 
     protected void onSend() {
