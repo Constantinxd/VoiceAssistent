@@ -2,6 +2,8 @@ package com.example.voiceassistent;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
@@ -18,7 +20,8 @@ public class MainActivity extends AppCompatActivity {
 
     protected Button sendButton;
     protected EditText questionText;
-    protected TextView chatWindow;
+    protected RecyclerView chatMessageList;
+    protected MessageListAdapter messageListAdapter;
     protected TextToSpeech textToSpeech;
     private ArrayList<String> chat;
     private final String chatKey = "chatKey";
@@ -41,7 +44,12 @@ public class MainActivity extends AppCompatActivity {
 
         sendButton = findViewById(R.id.sendButton);
         questionText = findViewById(R.id.questionField);
-        chatWindow = findViewById(R.id.chatWindow);
+        chatMessageList = findViewById(R.id.chatMessageList);
+        messageListAdapter = new MessageListAdapter();
+
+        chatMessageList.setLayoutManager(new LinearLayoutManager(this));
+        chatMessageList.setAdapter(messageListAdapter);
+
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -62,8 +70,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        for (String s : savedInstanceState.getStringArrayList("chat"))
-            chatWindow.append(s + "\n");
+        /*for (String s : savedInstanceState.getStringArrayList("chat"))
+            chatWindow.append(s + "\n");*/
     }
 
     protected void onSend() {
@@ -72,7 +80,9 @@ public class MainActivity extends AppCompatActivity {
         chat.add(text);
         chat.add(answer);
         textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH,null);
-        chatWindow.append(">> " + text + "\n");
-        chatWindow.append("<< " + answer + "\n");
+        messageListAdapter.messageList.add(new Message(text, true));
+        messageListAdapter.messageList.add(new Message(answer, false));
+        messageListAdapter.notifyDataSetChanged();
+        chatMessageList.scrollToPosition(messageListAdapter.messageList.size()-1);
     }
 }

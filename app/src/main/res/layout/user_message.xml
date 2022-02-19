@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/padding8dp">
+
+    <ImageView
+        android:id="@+id/userImageWindow"
+        android:layout_height="30dp"
+        android:layout_width="30dp"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:src="@drawable/user_img"
+        />
+
+    <TextView
+        android:id="@+id/messageTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/userNameWindow"
+        app:layout_constraintRight_toLeftOf="@id/userImageWindow"
+        android:background="@drawable/user_bubble"
+        android:paddingLeft="@dimen/padding8dp"
+        android:paddingRight="@dimen/padding8dp"
+        android:paddingTop="@dimen/padding4dp"
+        android:paddingBottom="@dimen/padding4dp"
+        android:layout_marginRight="8dp"
+
+        android:textSize="15sp"
+        android:textColor="#000000"
+        />
+
+    <TextView
+        android:id="@+id/userNameWindow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Пользователь"
+        android:textSize="10sp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/messageTextView"
+        android:paddingTop="@dimen/padding4dp"
+        android:paddingBottom="@dimen/padding4dp"
+        android:paddingRight="@dimen/padding4dp"
+        />
+
+    <TextView
+        android:id="@+id/messageDateView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="10:32"
+        android:textSize="10sp"
+        app:layout_constraintTop_toBottomOf="@id/messageTextView"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:paddingLeft="@dimen/padding4dp"
+        android:paddingTop="@dimen/padding4dp"
+        android:paddingBottom="@dimen/padding4dp"
+
+        />
+</androidx.constraintlayout.widget.ConstraintLayout>
