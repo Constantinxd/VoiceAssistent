@@ -69,9 +69,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-
-        /*for (String s : savedInstanceState.getStringArrayList("chat"))
-            chatWindow.append(s + "\n");*/
+        Boolean isSend = true;
+        for (String s : savedInstanceState.getStringArrayList("chatKey")) {
+            messageListAdapter.messageList.add(new Message(s, isSend));
+            chat.add(s);
+            messageListAdapter.notifyDataSetChanged();
+            chatMessageList.scrollToPosition(messageListAdapter.messageList.size() - 1);
+            isSend = !isSend;
+        }
     }
 
     protected void onSend() {
