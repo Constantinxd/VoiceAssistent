@@ -1,23 +1,18 @@
 package com.example.voiceassistent;
 
-import android.graphics.Path;
-import android.graphics.RadialGradient;
+import androidx.core.util.Consumer;
 
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
+import com.example.voiceassistent.Forecast.ForecastToString;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
-import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class AI {
     final static Map<String, String> map = new HashMap<>();
@@ -30,30 +25,48 @@ public class AI {
         map.put("(?i)([а-я\\s]*Что ты умеешь[\\s\\?]*)", "Я умею отвечать на вопросы");
     }
 
-    private static String getDynamicAnswer(String question) {
+    private static void getDynamicAnswer(String question, final Consumer<String> callback) {
+        String answer = "...";
+
         if (Pattern.matches("(?i)([а-я\\s]*Какой сегодня день[\\s\\?]*)", question))
-            return Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "";
+            answer = Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "";
 
         if (Pattern.matches("(?i)([а-я\\s]*Который час[\\s\\?]*)", question))
-            return LocalDateTime.now(ZoneId.of("Europe/Moscow")).getHour() + "";
+            answer = LocalDateTime.now(ZoneId.of("Europe/Moscow")).getHour() + "";
 
         if (Pattern.matches("(?i)([а-я\\s]*Какой день недели[\\s\\?]*)", question))
-            return getDayOfWeek();
+            answer = getDayOfWeek();
 
         if (Pattern.matches("(?i)([а-я\\s]*Сколько дней до " +
                 "(\\d|[0-2]\\d|3[0-1])\\.(\\d|0\\d|1[0-2])\\.(19\\d\\d|2[\\d]{3})[\\s\\?]*)", question))
-            return getDifferenceBetweenDates(question) + "";
+            answer = getDifferenceBetweenDates(question) + "";
 
-        return "...";
+        if (Pattern.matches("(?i)(погода в городе [\\wа-яА-Я]+)", question))
+            getWeather(question, weather -> callback.accept(weather));
+        else
+            callback.accept(answer);
     }
 
-    protected static String getAnswer(String question) {
+    protected static void getAnswer(String question, final Consumer<String> callback) {
         Optional<String> staticAnswer = map.entrySet()
                 .stream()
                 .filter(entry -> Pattern.matches(entry.getKey(), question))
                 .map(Map.Entry::getValue).findFirst();
 
-        return staticAnswer.orElseGet(() -> getDynamicAnswer(question));
+        if (staticAnswer.isPresent())
+            callback.accept(staticAnswer.get());
+        else
+            getDynamicAnswer(question, answer -> callback.accept(answer));
+    }
+
+    private static void getWeather(String question, final Consumer<String> callback) {
+        Pattern cityPattern = Pattern.compile("погода в городе (\\p{L}+)",
+                Pattern.CASE_INSENSITIVE);
+        Matcher matcher = cityPattern.matcher(question);
+        if (matcher.find()){
+            String cityName = matcher.group(1);
+            ForecastToString.getForecast(cityName, weather -> callback.accept(weather));
+        }
     }
 
     private static String getDayOfWeek() {

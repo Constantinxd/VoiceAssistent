@@ -2,6 +2,7 @@ package com.example.voiceassistent;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.util.Consumer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -10,10 +11,11 @@ import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
+
+import com.example.voiceassistent.Message.Message;
+import com.example.voiceassistent.Message.MessageListAdapter;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -81,13 +83,18 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onSend() {
         String text = questionText.getText().toString();
-        String answer = AI.getAnswer(text);
-        chat.add(text);
-        chat.add(answer);
-        textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH,null);
-        messageListAdapter.messageList.add(new Message(text, true));
-        messageListAdapter.messageList.add(new Message(answer, false));
-        messageListAdapter.notifyDataSetChanged();
-        chatMessageList.scrollToPosition(messageListAdapter.messageList.size()-1);
+        //String answer = AI.getAnswer(text);
+        AI.getAnswer(text, new Consumer<String>() {
+            @Override
+            public void accept(String answer) {
+                chat.add(text);
+                chat.add(answer);
+                textToSpeech.speak(answer, TextToSpeech.QUEUE_FLUSH,null);
+                messageListAdapter.messageList.add(new Message(text, true));
+                messageListAdapter.messageList.add(new Message(answer, false));
+                messageListAdapter.notifyDataSetChanged();
+                chatMessageList.scrollToPosition(messageListAdapter.messageList.size()-1);
+            }
+        });
     }
 }

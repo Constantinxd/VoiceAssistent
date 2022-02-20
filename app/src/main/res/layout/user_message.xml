@@ -18,17 +18,14 @@
 
     <TextView
         android:id="@+id/messageTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/userNameWindow"
         app:layout_constraintRight_toLeftOf="@id/userImageWindow"
+        app:layout_constraintLeft_toLeftOf="parent"
         android:background="@drawable/user_bubble"
-        android:paddingLeft="@dimen/padding8dp"
-        android:paddingRight="@dimen/padding8dp"
-        android:paddingTop="@dimen/padding4dp"
-        android:paddingBottom="@dimen/padding4dp"
+        android:padding="@dimen/padding8dp"
         android:layout_marginRight="8dp"
-
         android:textSize="15sp"
         android:textColor="#000000"
         />

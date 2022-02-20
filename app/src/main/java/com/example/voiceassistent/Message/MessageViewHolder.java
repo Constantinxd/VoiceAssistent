@@ -1,10 +1,13 @@
-package com.example.voiceassistent;
+package com.example.voiceassistent.Message;
 
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.voiceassistent.Message.Message;
+import com.example.voiceassistent.R;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
