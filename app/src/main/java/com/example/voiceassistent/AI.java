@@ -38,6 +38,7 @@ public class AI {
 
     private static void getDynamicAnswer(String question, final Consumer<String> callback) {
         String[] answers = new String[1];
+        answers[0] = "Не знаю как ответить на этот вопрос";
 
         if (Pattern.matches("(?i)([а-я\\s]*Какой сегодня день[\\s\\?]*)", question)) {
             callback.accept(Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "");

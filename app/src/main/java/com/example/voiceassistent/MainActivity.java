@@ -7,7 +7,10 @@ import androidx.core.util.Consumer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.ContentValues;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.view.Menu;
@@ -16,10 +19,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import com.example.voiceassistent.Datebase.DBHelper;
+import com.example.voiceassistent.Datebase.MessageEntity;
 import com.example.voiceassistent.Message.Message;
 import com.example.voiceassistent.Message.MessageListAdapter;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
@@ -37,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean isLight = true;
     private String THEME = "THEME";
 
+    DBHelper dBHelper;
+    SQLiteDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +64,6 @@ public class MainActivity extends AppCompatActivity {
 
         if (!isLight) getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
-        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         sendButton = findViewById(R.id.sendButton);
@@ -67,6 +74,27 @@ public class MainActivity extends AppCompatActivity {
         chatMessageList.setLayoutManager(new LinearLayoutManager(this));
         chatMessageList.setAdapter(messageListAdapter);
 
+        dBHelper = new DBHelper(this);
+        database = dBHelper.getWritableDatabase();
+
+        Cursor cursor = database.query(dBHelper.TABLE_MESSAGES, null, null,
+                null, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            int messageIndex = cursor.getColumnIndex(dBHelper.FIELD_MESSAGE);
+            int dateIndex = cursor.getColumnIndex(dBHelper.FIELD_DATE);
+            int sendIndex = cursor.getColumnIndex(dBHelper.FIELD_SEND);
+
+            do {
+                MessageEntity entity = new MessageEntity(cursor.getString(messageIndex),
+                        cursor.getString(dateIndex), cursor.getInt(sendIndex));
+                Message message = new Message(entity);
+                messageListAdapter.messageList.add(message);
+                messageListAdapter.notifyDataSetChanged();
+                chatMessageList.scrollToPosition(messageListAdapter.messageList.size() - 1);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,6 +102,13 @@ public class MainActivity extends AppCompatActivity {
                 onSend();
             }
         });
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        database.close();
+        super.onDestroy();
     }
 
     @Override
@@ -84,6 +119,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
+        database.delete(dBHelper.TABLE_MESSAGES, null, null);
+        System.out.println("HEREHEA");
+        System.out.println(messageListAdapter.messageList.size());
+        for (int i = 0; i < messageListAdapter.messageList.size(); i++) {
+            MessageEntity entity = new MessageEntity(messageListAdapter.messageList.get(i));
+            System.out.println(entity.text);
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(DBHelper.FIELD_MESSAGE, entity.text);
+            contentValues.put(DBHelper.FIELD_SEND, entity.isSend);
+            contentValues.put(DBHelper.FIELD_DATE, entity.date);
+
+            database.insert(dBHelper.TABLE_MESSAGES,null, contentValues);
+        }
+
         SharedPreferences.Editor editor = sPref.edit();
         editor.putBoolean(THEME, isLight);
         editor.apply();
@@ -129,7 +178,6 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onSend() {
         String text = questionText.getText().toString();
-        //String answer = AI.getAnswer(text);
         AI.getAnswer(text, new Consumer<String>() {
             @Override
             public void accept(String answer) {
@@ -139,7 +187,8 @@ public class MainActivity extends AppCompatActivity {
                 messageListAdapter.messageList.add(new Message(text, true));
                 messageListAdapter.messageList.add(new Message(answer, false));
                 messageListAdapter.notifyDataSetChanged();
-                chatMessageList.scrollToPosition(messageListAdapter.messageList.size()-1);
+                chatMessageList.scrollToPosition(messageListAdapter.messageList.size() - 1);
+                System.out.println(messageListAdapter.messageList.size());
             }
         });
     }
