@@ -2,12 +2,16 @@ package com.example.voiceassistent;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.util.Consumer;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -28,6 +32,12 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> chat;
     private final String chatKey = "chatKey";
 
+    SharedPreferences sPref;
+    public static final String APP_PREFERENCES = "mysettings";
+    private boolean isLight = true;
+    private String THEME = "THEME";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
@@ -40,6 +50,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         chat = new ArrayList<>();
+
+        sPref = getSharedPreferences(APP_PREFERENCES, MODE_PRIVATE);
+        isLight = sPref.getBoolean(THEME, true);
+
+        if (!isLight) getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -59,6 +74,37 @@ public class MainActivity extends AppCompatActivity {
                 onSend();
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    protected void onStop() {
+        SharedPreferences.Editor editor = sPref.edit();
+        editor.putBoolean(THEME, isLight);
+        editor.apply();
+        super.onStop();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.day_settings:
+                isLight = true;
+                getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+            case R.id.night_settings:
+                isLight = false;
+                getDelegate().setLocalNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            default:
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
