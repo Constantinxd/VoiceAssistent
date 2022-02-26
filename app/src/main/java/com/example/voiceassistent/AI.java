@@ -1,9 +1,15 @@
 package com.example.voiceassistent;
 
+import android.os.AsyncTask;
+import android.util.Log;
+
 import androidx.core.util.Consumer;
 
 import com.example.voiceassistent.Forecast.ForecastToString;
+import com.example.voiceassistent.Holiday.Date;
+import com.example.voiceassistent.Holiday.ParsingHtmlService;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -11,8 +17,13 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class AI {
     final static Map<String, String> map = new HashMap<>();
@@ -26,25 +37,40 @@ public class AI {
     }
 
     private static void getDynamicAnswer(String question, final Consumer<String> callback) {
-        String answer = "...";
+        String[] answers = new String[1];
 
-        if (Pattern.matches("(?i)([а-я\\s]*Какой сегодня день[\\s\\?]*)", question))
-            answer = Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "";
+        if (Pattern.matches("(?i)([а-я\\s]*Какой сегодня день[\\s\\?]*)", question)) {
+            callback.accept(Calendar.getInstance().get(Calendar.DAY_OF_MONTH) + "");
+        } else if (Pattern.matches("(?i)([а-я\\s]*Который час[\\s\\?]*)", question)) {
+            callback.accept(LocalDateTime.now(ZoneId.of("Europe/Moscow")).getHour() + "");
+        } else if (Pattern.matches("(?i)([а-я\\s]*Какой день недели[\\s\\?]*)", question)) {
+            callback.accept(getDayOfWeek());
+        } else if (Pattern.matches("(?i)([а-я\\s]*Сколько дней до " +
+                "(\\d|[0-2]\\d|3[0-1])\\.(\\d|0\\d|1[0-2])\\.(19\\d\\d|2[\\d]{3})[\\s\\?]*)", question)) {
+            callback.accept(getDifferenceBetweenDates(question) + "");
+        } else if (Pattern.matches("(?i)([а-я\\s]*праздник[и]? [\\.\\wа-яА-Я\\s]+)[\\?]?", question)) {
+            try {
+                String date = Date.getDate(question);
+                Observable.fromCallable(()->{
+                    answers[0] = ParsingHtmlService.getHoliday(date);
 
-        if (Pattern.matches("(?i)([а-я\\s]*Который час[\\s\\?]*)", question))
-            answer = LocalDateTime.now(ZoneId.of("Europe/Moscow")).getHour() + "";
-
-        if (Pattern.matches("(?i)([а-я\\s]*Какой день недели[\\s\\?]*)", question))
-            answer = getDayOfWeek();
-
-        if (Pattern.matches("(?i)([а-я\\s]*Сколько дней до " +
-                "(\\d|[0-2]\\d|3[0-1])\\.(\\d|0\\d|1[0-2])\\.(19\\d\\d|2[\\d]{3})[\\s\\?]*)", question))
-            answer = getDifferenceBetweenDates(question) + "";
-
-        if (Pattern.matches("(?i)(погода в городе [\\wа-яА-Я]+)", question))
+                    return answers;
+                }).subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((result) -> {
+                            callback.accept(answers[0]);
+                        });
+            } catch (IllegalArgumentException iae) {
+                callback.accept(iae.getMessage());
+            } catch (Exception exception) {
+                exception.printStackTrace();
+                callback.accept("Не получилось узнать праздник");
+            }
+        } else if (Pattern.matches("(?i)([а-я\\s]*погода в городе [\\wа-яА-Я]+)", question)) {
             getWeather(question, weather -> callback.accept(weather));
-        else
-            callback.accept(answer);
+        } else {
+            callback.accept(answers[0]);
+        }
     }
 
     protected static void getAnswer(String question, final Consumer<String> callback) {
@@ -63,7 +89,7 @@ public class AI {
         Pattern cityPattern = Pattern.compile("погода в городе (\\p{L}+)",
                 Pattern.CASE_INSENSITIVE);
         Matcher matcher = cityPattern.matcher(question);
-        if (matcher.find()){
+        if (matcher.find()) {
             String cityName = matcher.group(1);
             ForecastToString.getForecast(cityName, weather -> callback.accept(weather));
         }
